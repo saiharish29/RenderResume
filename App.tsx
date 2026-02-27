@@ -301,6 +301,18 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <footer className="no-print bg-white border-t border-slate-100 py-4 px-6 mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+          <span>Built by <span className="text-slate-500 font-medium">Harish</span> · ATS Resume Optimizer</span>
+          <a
+            href="mailto:sai.harish29@gmail.com"
+            className="text-blue-400 hover:text-blue-600 transition-colors font-medium"
+          >
+            sai.harish29@gmail.com
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }
