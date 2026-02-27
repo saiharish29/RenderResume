@@ -1,5 +1,6 @@
 
 export enum AppStep {
+  API_KEY = 'API_KEY',
   INPUT = 'INPUT',
   ANALYZING = 'ANALYZING',
   VERIFICATION = 'VERIFICATION',

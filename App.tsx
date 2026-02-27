@@ -5,28 +5,54 @@ import { ScoreChart } from './components/ScoreChart';
 import { VerificationSection } from './components/VerificationSection';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SettingsControls } from './components/SettingsControls';
-import { analyzeResumeGap, generateFinalResume } from './services/geminiService';
+import { ApiKeyScreen } from './components/ApiKeyScreen';
+import { analyzeResumeGap, generateFinalResume, configureApiKey } from './services/geminiService';
 import { AppStep, AnalysisResult, GapAnalysisResult, ResumeTheme } from './types';
-import { Loader2, AlertTriangle, Download, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, RefreshCw, KeyRound } from 'lucide-react';
+
+const SESSION_KEY = 'gemini_api_key';
 
 export default function App() {
-  const [step, setStep] = useState<AppStep>(AppStep.INPUT);
+  const [step, setStep] = useState<AppStep>(() => {
+    const savedKey = sessionStorage.getItem(SESSION_KEY);
+    if (savedKey) {
+      configureApiKey(savedKey);
+      return AppStep.INPUT;
+    }
+    return AppStep.API_KEY;
+  });
+
   const [resumeText, setResumeText] = useState('');
   const [resumeFile, setResumeFile] = useState<{ name: string; data: string; mimeType: string } | null>(null);
   const [jdText, setJdText] = useState('');
-  
+
   const [mode, setMode] = useState<'concise' | 'detailed'>('concise');
   const [theme, setTheme] = useState<ResumeTheme>('classic');
   const [enableHumanize, setEnableHumanize] = useState(false);
   const [includeCoverLetter, setIncludeCoverLetter] = useState(false);
   const [context, setContext] = useState('');
   const [confirmedSkills, setConfirmedSkills] = useState<string[]>([]);
-  
+
   const [gapAnalysis, setGapAnalysis] = useState<GapAnalysisResult | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleApiKeySubmit = (key: string, remember: boolean) => {
+    configureApiKey(key);
+    if (remember) {
+      sessionStorage.setItem(SESSION_KEY, key);
+    } else {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+    setStep(AppStep.INPUT);
+  };
+
+  const handleChangeKey = () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setStep(AppStep.API_KEY);
+  };
 
   const handleInitialAnalysis = async () => {
     setLoading(true);
@@ -118,13 +144,22 @@ export default function App() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">R</div>
             <span className="font-bold text-xl text-slate-800 tracking-tight">ATS<span className="text-blue-600">Optimizer</span></span>
           </div>
-          {step === AppStep.RESULT && (
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setStep(AppStep.INPUT)}
-                className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+          {step !== AppStep.API_KEY && (
+            <div className="flex items-center gap-4">
+              {step === AppStep.RESULT && (
+                <button
+                  onClick={() => setStep(AppStep.INPUT)}
+                  className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+                >
+                  New Analysis
+                </button>
+              )}
+              <button
+                onClick={handleChangeKey}
+                className="text-sm font-medium text-slate-400 hover:text-slate-700 transition-colors flex items-center gap-1.5"
               >
-                New Analysis
+                <KeyRound size={14} />
+                Change Key
               </button>
             </div>
           )}
@@ -132,7 +167,11 @@ export default function App() {
       </nav>
 
       <main className="flex-1">
-        
+
+        {step === AppStep.API_KEY && (
+          <ApiKeyScreen onApiKeySubmit={handleApiKeySubmit} />
+        )}
+
         {step === AppStep.INPUT && (
           <>
              {error && (
@@ -143,13 +182,13 @@ export default function App() {
                 </div>
               </div>
             )}
-            <InputSection 
-              resumeText={resumeText} 
-              setResumeText={setResumeText} 
+            <InputSection
+              resumeText={resumeText}
+              setResumeText={setResumeText}
               resumeFile={resumeFile}
               setResumeFile={setResumeFile}
-              jdText={jdText} 
-              setJdText={setJdText} 
+              jdText={jdText}
+              setJdText={setJdText}
               onAnalyze={handleInitialAnalysis}
               isAnalyzable={isAnalyzable}
             />
@@ -168,8 +207,8 @@ export default function App() {
                 {step === AppStep.ANALYZING ? "Analyzing Resume Gaps..." : "Tailoring Your Resume..."}
             </h2>
             <p className="text-slate-500 mt-2 animate-pulse">
-                {step === AppStep.ANALYZING 
-                    ? "Identifying missing keywords and comparing against job description" 
+                {step === AppStep.ANALYZING
+                    ? "Identifying missing keywords and comparing against job description"
                     : "Applying requested length, theme, and writing style..."
                 }
             </p>
@@ -186,8 +225,8 @@ export default function App() {
                   </div>
                 </div>
               )}
-            <VerificationSection 
-                analysis={gapAnalysis} 
+            <VerificationSection
+                analysis={gapAnalysis}
                 onConfirm={handleGeneration}
                 isGenerating={loading}
                 mode={mode} setMode={setMode}
@@ -201,16 +240,16 @@ export default function App() {
 
         {step === AppStep.RESULT && result && (
           <div className="max-w-[1600px] mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
+
             <aside className="no-print lg:col-span-3 space-y-6 h-fit lg:sticky lg:top-24">
-              
+
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                   <CheckCircle2 size={20} className="text-green-500"/>
                   Optimized ATS Score
                 </h3>
                 <ScoreChart score={result.scoreBreakdown.keywords} />
-                
+
                 <div className="grid grid-cols-2 gap-4 mt-6">
                    <div className="bg-slate-50 p-3 rounded-lg text-center">
                       <div className="text-xs text-slate-500 uppercase font-semibold">Keywords</div>
@@ -225,13 +264,13 @@ export default function App() {
 
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-4">Configuration</h3>
-                <SettingsControls 
+                <SettingsControls
                     mode={mode} setMode={setMode}
                     theme={theme} setTheme={setTheme}
                     enableHumanize={enableHumanize} setEnableHumanize={setEnableHumanize}
                     includeCoverLetter={includeCoverLetter} setIncludeCoverLetter={setIncludeCoverLetter}
                 />
-                <button 
+                <button
                     onClick={handleRegenerate}
                     className="mt-4 w-full py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >

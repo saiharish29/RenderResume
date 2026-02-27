@@ -4,15 +4,17 @@ import { AnalysisResult, GapAnalysisResult, OptimizationRequest, GenerationReque
 // ─── Centralized Config ─────────────────────────────────────────────────────
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
+let _runtimeApiKey = '';
+
+export const configureApiKey = (key: string) => {
+  _runtimeApiKey = key.trim();
+};
+
 const getConfig = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "GEMINI_API_KEY is not configured. Please run: npm run setup"
-    );
+  if (!_runtimeApiKey) {
+    throw new Error("No API key configured. Please enter your Gemini API key.");
   }
-  const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-  return { apiKey, model };
+  return { apiKey: _runtimeApiKey, model: DEFAULT_MODEL };
 };
 
 // ─── Schemas ────────────────────────────────────────────────────────────────
