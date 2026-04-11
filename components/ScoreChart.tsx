@@ -15,8 +15,8 @@ export const ScoreChart: React.FC<ScoreChartProps> = ({ score }) => {
   ];
 
   return (
-    <div className="relative w-full h-48 flex items-center justify-center">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="relative w-full flex items-center justify-center" style={{ height: 192 }}>
+      <ResponsiveContainer width="100%" height={192}>
         <RadialBarChart 
           innerRadius="70%" 
           outerRadius="100%" 
