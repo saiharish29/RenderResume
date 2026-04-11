@@ -74,6 +74,9 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ data, scale = 1, t
   const styles = getThemeStyles();
 
   const downloadPdf = () => {
+    // Clean up any stale html2pdf overlays that block clicks
+    document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(el => el.remove());
+
     const element = document.getElementById('resume-preview-content');
     if (!element) {
         alert("Could not find resume content to export.");
@@ -94,7 +97,18 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ data, scale = 1, t
       pagebreak:    { mode: 'avoid-all' }
     };
 
-    (window as any).html2pdf().set(opt).from(element).save();
+    (window as any).html2pdf()
+      .set(opt)
+      .from(element)
+      .save()
+      .catch((err: any) => {
+        console.error('PDF generation failed:', err);
+        alert('PDF generation failed. Please try again.');
+      })
+      .finally(() => {
+        // Always clean up overlay elements after generation
+        document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(el => el.remove());
+      });
   };
 
   const generateDocx = async (type: 'resume' | 'coverLetter') => {
