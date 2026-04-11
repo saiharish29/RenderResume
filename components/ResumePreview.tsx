@@ -92,7 +92,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ data, scale = 1, t
       margin:       isConcise ? 0.3 : 0.5,
       filename:     'Optimized_Resume.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { scale: 2, useCORS: true, allowTaint: true, logging: false },
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' as const },
       pagebreak:    { mode: 'avoid-all' }
     };
@@ -102,11 +102,12 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({ data, scale = 1, t
       .from(element)
       .save()
       .catch((err: any) => {
-        console.error('PDF generation failed:', err);
-        alert('PDF generation failed. Please try again.');
+        console.error('html2pdf failed, falling back to browser print:', err);
+        // Clean up overlay before print so it doesn't appear in print output
+        document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(el => el.remove());
+        window.print();
       })
       .finally(() => {
-        // Always clean up overlay elements after generation
         document.querySelectorAll('.html2pdf__overlay, .html2pdf__container').forEach(el => el.remove());
       });
   };
