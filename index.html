@@ -11,17 +11,17 @@
         font-family: 'Inter', sans-serif;
       }
       @media print {
-        @page { margin: 0.5in; size: auto; }
-        body { background: white; -webkit-print-color-adjust: exact; }
+        @page { margin: 0; size: A4 portrait; }
+        body { background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; }
         .no-print { display: none !important; }
         .print-only { display: block !important; }
-        .resume-page { 
-          box-shadow: none !important; 
-          margin: 0 !important; 
+        .resume-page {
+          box-shadow: none !important;
+          margin: 0 auto !important;
           width: 100% !important;
-          max-width: none !important;
-          padding: 0 !important;
+          max-width: 210mm !important;
           border: none !important;
+          transform: none !important;
         }
       }
     </style>
